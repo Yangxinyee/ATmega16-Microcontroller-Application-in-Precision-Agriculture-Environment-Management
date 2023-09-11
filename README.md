@@ -170,4 +170,4 @@ When the soil moisture falls below the threshold, the pump starts running and LI
 
 ## Chinese Software Copyright Certificate
 
-<div align=center><img src="https://i.imgur.com/8nzwq9f.jpg" width="60%"></div>
+<div align=center><img src="https://i.imgur.com/8nzwq9f.jpg" width="50%"></div>
