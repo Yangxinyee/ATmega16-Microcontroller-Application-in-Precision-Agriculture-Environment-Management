@@ -1,0 +1,64 @@
+RAM Allocation [bytes]
+Variable                                                                          Address   Size
+------------------------------------------------------------------------------------------------
+disdat                                                                            0x0160      14
+disset                                                                            0x016E      16
+Lv                                                                                0x017E       4
+Tv                                                                                0x0182       4
+Rval                                                                              0x0186       2
+dispTemp                                                                          0x0188       2
+setIndex                                                                          0x018A       1
+setLval                                                                           0x018B       1
+setRval                                                                           0x018C       1
+setTval                                                                           0x018D       1
+
+EEPROM Allocation [bytes]
+Variable                                                                          Address   Size
+------------------------------------------------------------------------------------------------
+
+Register Allocation
+Variable                                                                          Register  Size
+------------------------------------------------------------------------------------------------
+ack                                                                               R5           1
+midval                                                                            R4           1
+state                                                                             R7           1
+refreshFlag                                                                       R8,R9        2
+temp                                                                              R10,R11      2
+Lval                                                                              R12,R13      2
+rekey                                                                             R6           1
+
+FLASH Allocation [words]
+Function                                                                          Address   Size
+------------------------------------------------------------------------------------------------
+lcd_set_e                                                                         0x000A5     10
+lcd_clear_e                                                                       0x000AF     10
+ext_int0_isr                                                                      0x000B9     41
+ext_int1_isr                                                                      0x000E2     41
+ext_int2_isr                                                                      0x0010B     21
+Init_DS18B20                                                                      0x00120     28
+LCD_INIT                                                                          0x0013C     29
+LCD_Busy                                                                          0x00159     24
+LCD_WriteControl                                                                  0x00171     12
+LCD_WriteData                                                                     0x0017D     12
+Init_LCD                                                                          0x00189     13
+LCD_Clear                                                                         0x00196      3
+LCD_DisplayCharacter                                                              0x00199      5
+LCD_DisplayString                                                                 0x0019E     18
+LCD_Cursor                                                                        0x001B0     40
+Read_DS18B20                                                                      0x001D8     41
+Write_DS18B20                                                                     0x00201     43
+Read_Temperature                                                                  0x0022C     79
+main                                                                              0x0027B    233
+I2C_SDA_IN                                                                        0x00364      7
+I2C_SDA_OUT                                                                       0x0036B      2
+I2C_SCL_OUT                                                                       0x0036D      5
+StartI2C                                                                          0x00372      9
+StopI2C                                                                           0x0037B      8
+WriteI2C                                                                          0x00383     35
+ReadI2CNoAck                                                                      0x003C2     40
+ReadADC                                                                           0x003EA     30
+put_buff_G100                                                                     0x00408     64
+_print_G100                                                                       0x00448    308
+sprintf                                                                           0x0057C     52
+strlen                                                                            0x005B0     12
+strlenf                                                                           0x005BC     13

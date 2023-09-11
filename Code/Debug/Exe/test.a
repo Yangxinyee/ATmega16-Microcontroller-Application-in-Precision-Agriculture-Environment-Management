@@ -1,0 +1,1926 @@
+;#include <mega16.h>
+;PCODE: $00000000 VOL: 0
+	#ifndef __SLEEP_DEFINED__
+;PCODE: $00000001 VOL: 0
+	#define __SLEEP_DEFINED__
+;PCODE: $00000002 VOL: 0
+	.EQU __se_bit=0x40
+;PCODE: $00000003 VOL: 0
+	.EQU __sm_mask=0xB0
+;PCODE: $00000004 VOL: 0
+	.EQU __sm_powerdown=0x20
+;PCODE: $00000005 VOL: 0
+	.EQU __sm_powersave=0x30
+;PCODE: $00000006 VOL: 0
+	.EQU __sm_standby=0xA0
+;PCODE: $00000007 VOL: 0
+	.EQU __sm_ext_standby=0xB0
+;PCODE: $00000008 VOL: 0
+	.EQU __sm_adc_noise_red=0x10
+;PCODE: $00000009 VOL: 0
+	.SET power_ctrl_reg=mcucr
+;PCODE: $0000000A VOL: 0
+	#endif
+;PCODE: $0000000B VOL: 0
+;PCODE: $0000000C VOL: 0
+;#include "delay.h"
+;#include "includes.h"
+;#include "stdio.h"
+;bit ack;
+;unsigned char midval;
+;uchar state;
+;char disdat[14]; //打印数组初始化
+;char disset[16];
+;int refreshFlag = 0;
+;int temp;
+;float temperature = 0;
+;float Lv = 0.0;             //光照采集电压
+;float Tv = 0.0;             //土壤采集电压
+;unsigned int Lval = 0;      //光照强度
+;unsigned int Rval = 0;      //土壤湿度
+;unsigned int dispTemp;      //显示温度
+;unsigned char rekey = 0;    //按键防止重复
+;unsigned char setIndex = 0; //设置值
+;unsigned char setLval = 50;
+
+	.DSEG
+;unsigned char setRval = 50;
+;unsigned char setTval = 35;
+;void lcd_set_e(void) {
+; 0000 0017 void lcd_set_e(void) {
+
+	.CSEG
+;PCODE: $0000000D VOL: 0
+;PCODE: $0000000E VOL: 0
+; 0000 0018     PORTD.1 |= 1;
+;PCODE: $0000000F VOL: 0
+;PCODE: $00000010 VOL: 0
+;PCODE: $00000011 VOL: 0
+;PCODE: $00000012 VOL: 0
+;PCODE: $00000013 VOL: 0
+;PCODE: $00000014 VOL: 0
+;PCODE: $00000015 VOL: 0
+;PCODE: $00000016 VOL: 0
+;PCODE: $00000017 VOL: 0
+;PCODE: $00000018 VOL: 0
+;PCODE: $00000019 VOL: 0
+;PCODE: $0000001A VOL: 0
+; 0000 0019 }
+;PCODE: $0000001B VOL: 0
+;PCODE: $0000001C VOL: 0
+;void lcd_clear_e(void) {
+; 0000 001A void lcd_clear_e(void) {
+;PCODE: $0000001D VOL: 0
+;PCODE: $0000001E VOL: 0
+; 0000 001B     PORTD.1 &= 0;
+;PCODE: $0000001F VOL: 0
+;PCODE: $00000020 VOL: 0
+;PCODE: $00000021 VOL: 0
+;PCODE: $00000022 VOL: 0
+;PCODE: $00000023 VOL: 0
+;PCODE: $00000024 VOL: 0
+;PCODE: $00000025 VOL: 0
+;PCODE: $00000026 VOL: 0
+;PCODE: $00000027 VOL: 0
+;PCODE: $00000028 VOL: 0
+;PCODE: $00000029 VOL: 0
+;PCODE: $0000002A VOL: 0
+; 0000 001C }
+;PCODE: $0000002B VOL: 0
+;PCODE: $0000002C VOL: 0
+;// External Interrupt 0 service routine
+;interrupt[EXT_INT0] void ext_int0_isr(void)
+; 0000 001F {
+;PCODE: $0000002D VOL: 0
+;PCODE: $0000002E VOL: 0
+; 0000 0020     // Place your code here
+; 0000 0021     if (setIndex == 1) //设光照阈值
+;PCODE: $0000002F VOL: 0
+;PCODE: $00000030 VOL: 0
+;PCODE: $00000031 VOL: 0
+; 0000 0022     {
+; 0000 0023         if (setLval < 99) //不超过99
+;PCODE: $00000032 VOL: 0
+;PCODE: $00000033 VOL: 0
+;PCODE: $00000034 VOL: 0
+; 0000 0024         {
+; 0000 0025             setLval++;
+;PCODE: $00000035 VOL: 0
+;PCODE: $00000036 VOL: 0
+;PCODE: $00000037 VOL: 0
+; 0000 0026         }
+; 0000 0027     }
+;PCODE: $00000038 VOL: 0
+; 0000 0028     else if (setIndex == 2) //设土壤阈值
+;PCODE: $00000039 VOL: 0
+;PCODE: $0000003A VOL: 0
+;PCODE: $0000003B VOL: 0
+;PCODE: $0000003C VOL: 0
+;PCODE: $0000003D VOL: 0
+; 0000 0029     {
+; 0000 002A         if (setRval < 99) //不超过99
+;PCODE: $0000003E VOL: 0
+;PCODE: $0000003F VOL: 0
+;PCODE: $00000040 VOL: 0
+; 0000 002B         {
+; 0000 002C             setRval++;
+;PCODE: $00000041 VOL: 0
+;PCODE: $00000042 VOL: 0
+;PCODE: $00000043 VOL: 0
+; 0000 002D         }
+; 0000 002E     }
+;PCODE: $00000044 VOL: 0
+; 0000 002F     else if (setIndex == 3) //温度设置
+;PCODE: $00000045 VOL: 0
+;PCODE: $00000046 VOL: 0
+;PCODE: $00000047 VOL: 0
+;PCODE: $00000048 VOL: 0
+;PCODE: $00000049 VOL: 0
+; 0000 0030     {
+; 0000 0031         if (setTval < 99) //不超过99
+;PCODE: $0000004A VOL: 0
+;PCODE: $0000004B VOL: 0
+;PCODE: $0000004C VOL: 0
+; 0000 0032         {
+; 0000 0033             setTval++;
+;PCODE: $0000004D VOL: 0
+;PCODE: $0000004E VOL: 0
+;PCODE: $0000004F VOL: 0
+; 0000 0034         }
+; 0000 0035     }
+;PCODE: $00000050 VOL: 0
+; 0000 0036 }
+;PCODE: $00000051 VOL: 0
+;PCODE: $00000052 VOL: 0
+;PCODE: $00000053 VOL: 0
+;PCODE: $00000054 VOL: 0
+;PCODE: $00000055 VOL: 0
+;PCODE: $00000056 VOL: 0
+;// External Interrupt 1 service routine
+;interrupt[EXT_INT1] void ext_int1_isr(void)
+; 0000 0039 {
+;PCODE: $00000057 VOL: 0
+;PCODE: $00000058 VOL: 0
+; 0000 003A     // Place your code here
+; 0000 003B     if (setIndex == 1) //设光照阈值
+;PCODE: $00000059 VOL: 0
+;PCODE: $0000005A VOL: 0
+;PCODE: $0000005B VOL: 0
+; 0000 003C     {
+; 0000 003D         if (setLval > 0) //最小为0
+;PCODE: $0000005C VOL: 0
+;PCODE: $0000005D VOL: 0
+;PCODE: $0000005E VOL: 0
+; 0000 003E         {
+; 0000 003F             setLval--;
+;PCODE: $0000005F VOL: 0
+;PCODE: $00000060 VOL: 0
+;PCODE: $00000061 VOL: 0
+; 0000 0040         }
+; 0000 0041     }
+;PCODE: $00000062 VOL: 0
+; 0000 0042     else if (setIndex == 2) //设土壤阈值
+;PCODE: $00000063 VOL: 0
+;PCODE: $00000064 VOL: 0
+;PCODE: $00000065 VOL: 0
+;PCODE: $00000066 VOL: 0
+;PCODE: $00000067 VOL: 0
+; 0000 0043     {
+; 0000 0044         if (setRval > 0) //最小为0
+;PCODE: $00000068 VOL: 0
+;PCODE: $00000069 VOL: 0
+;PCODE: $0000006A VOL: 0
+; 0000 0045         {
+; 0000 0046             setRval--;
+;PCODE: $0000006B VOL: 0
+;PCODE: $0000006C VOL: 0
+;PCODE: $0000006D VOL: 0
+; 0000 0047         }
+; 0000 0048     }
+;PCODE: $0000006E VOL: 0
+; 0000 0049     else if (setIndex == 3) //温度设置
+;PCODE: $0000006F VOL: 0
+;PCODE: $00000070 VOL: 0
+;PCODE: $00000071 VOL: 0
+;PCODE: $00000072 VOL: 0
+;PCODE: $00000073 VOL: 0
+; 0000 004A     {
+; 0000 004B         if (setTval > 0) //最小为0
+;PCODE: $00000074 VOL: 0
+;PCODE: $00000075 VOL: 0
+;PCODE: $00000076 VOL: 0
+; 0000 004C         {
+; 0000 004D             setTval--;
+;PCODE: $00000077 VOL: 0
+;PCODE: $00000078 VOL: 0
+;PCODE: $00000079 VOL: 0
+; 0000 004E         }
+; 0000 004F     }
+;PCODE: $0000007A VOL: 0
+; 0000 0050 }
+;PCODE: $0000007B VOL: 0
+;PCODE: $0000007C VOL: 0
+;PCODE: $0000007D VOL: 0
+;PCODE: $0000007E VOL: 0
+;PCODE: $0000007F VOL: 0
+;PCODE: $00000080 VOL: 0
+;// External Interrupt 2 service routine
+;interrupt[EXT_INT2] void ext_int2_isr(void)
+; 0000 0053 {
+;PCODE: $00000081 VOL: 0
+;PCODE: $00000082 VOL: 0
+; 0000 0054     // Place your code here
+; 0000 0055     setIndex++;
+;PCODE: $00000083 VOL: 0
+;PCODE: $00000084 VOL: 0
+;PCODE: $00000085 VOL: 0
+; 0000 0056     if (setIndex > 3)
+;PCODE: $00000086 VOL: 0
+;PCODE: $00000087 VOL: 0
+;PCODE: $00000088 VOL: 0
+; 0000 0057     {
+; 0000 0058         setIndex = 0; //取消设置
+;PCODE: $00000089 VOL: 0
+;PCODE: $0000008A VOL: 0
+; 0000 0059     }
+; 0000 005A }
+;PCODE: $0000008B VOL: 0
+;PCODE: $0000008C VOL: 0
+;PCODE: $0000008D VOL: 0
+;PCODE: $0000008E VOL: 0
+;int Init_DS18B20(void)
+; 0000 005C {
+;PCODE: $0000008F VOL: 0
+;PCODE: $00000090 VOL: 0
+; 0000 005D     int temp;
+; 0000 005E     //主机发送480-960us的低电平
+; 0000 005F     DQ_DIR_OUT();
+;PCODE: $00000091 VOL: 0
+;PCODE: $00000092 VOL: 0
+;	temp -> R16,R17
+;PCODE: $00000093 VOL: 0
+;PCODE: $00000094 VOL: 0
+; 0000 0060     DQ_SET();
+;PCODE: $00000095 VOL: 0
+;PCODE: $00000096 VOL: 0
+; 0000 0061     delay_us(10);
+;PCODE: $00000097 VOL: 0
+; 0000 0062     DQ_CLEAR();
+;PCODE: $00000098 VOL: 0
+;PCODE: $00000099 VOL: 0
+; 0000 0063     delay_us(750);
+;PCODE: $0000009A VOL: 0
+; 0000 0064     DQ_SET();
+;PCODE: $0000009B VOL: 0
+;PCODE: $0000009C VOL: 0
+; 0000 0065     //从机拉低60-240us响应
+; 0000 0066     DQ_DIR_IN();
+;PCODE: $0000009D VOL: 0
+;PCODE: $0000009E VOL: 0
+; 0000 0067     delay_us(150);
+;PCODE: $0000009F VOL: 0
+; 0000 0068     temp = DQ_DATA;
+;PCODE: $000000A0 VOL: 0
+;PCODE: $000000A1 VOL: 0
+;PCODE: $000000A2 VOL: 0
+;PCODE: $000000A3 VOL: 0
+;PCODE: $000000A4 VOL: 0
+; 0000 0069     delay_us(500);
+;PCODE: $000000A5 VOL: 0
+; 0000 006A     return temp;
+;PCODE: $000000A6 VOL: 0
+;PCODE: $000000A7 VOL: 0
+;PCODE: $000000A8 VOL: 0
+; 0000 006B }
+;PCODE: $000000A9 VOL: 0
+;
+;void LCD_INIT(void)
+; 0000 006E {
+;PCODE: $000000AA VOL: 0
+;PCODE: $000000AB VOL: 0
+; 0000 006F 	DDRD.1 = 1;
+;PCODE: $000000AC VOL: 0
+;PCODE: $000000AD VOL: 0
+; 0000 0070 	LCD_DIR_PORT = 0xff; // LCD port output
+;PCODE: $000000AE VOL: 0
+;PCODE: $000000AF VOL: 0
+; 0000 0071 	LCD_OP_PORT = 0x30; // Load high-data to port
+;PCODE: $000000B0 VOL: 0
+;PCODE: $000000B1 VOL: 0
+; 0000 0072 	lcd_clear_rw(); // Set LCD to write
+;PCODE: $000000B2 VOL: 0
+;PCODE: $000000B3 VOL: 0
+; 0000 0073 	lcd_clear_rs(); // Set LCD to command
+;PCODE: $000000B4 VOL: 0
+;PCODE: $000000B5 VOL: 0
+; 0000 0074 	lcd_set_e(); // Write data to LCD
+;PCODE: $000000B6 VOL: 0
+; 0000 0075 	delay_us(10);
+;PCODE: $000000B7 VOL: 0
+; 0000 0076 	lcd_clear_e(); // Disable LCD
+;PCODE: $000000B8 VOL: 0
+; 0000 0077 	delay_us(40);
+;PCODE: $000000B9 VOL: 0
+; 0000 0078 	lcd_clear_rw() ; // Set LCD to write
+;PCODE: $000000BA VOL: 0
+;PCODE: $000000BB VOL: 0
+; 0000 0079 	lcd_clear_rs(); // Set LCD to command
+;PCODE: $000000BC VOL: 0
+;PCODE: $000000BD VOL: 0
+; 0000 007A 	lcd_set_e(); // Write data to LCD
+;PCODE: $000000BE VOL: 0
+; 0000 007B 	delay_us(10);
+;PCODE: $000000BF VOL: 0
+; 0000 007C 	lcd_clear_e(); // Disable LCD
+;PCODE: $000000C0 VOL: 0
+; 0000 007D 	delay_us(40);
+;PCODE: $000000C1 VOL: 0
+; 0000 007E 	lcd_set_e(); // Write data to LCD
+;PCODE: $000000C2 VOL: 0
+; 0000 007F 	delay_us(10);
+;PCODE: $000000C3 VOL: 0
+; 0000 0080 	lcd_clear_e(); // Disable LCD
+;PCODE: $000000C4 VOL: 0
+; 0000 0081 	delay_us(40);
+;PCODE: $000000C5 VOL: 0
+; 0000 0082 	LCD_OP_PORT = 0x20;
+;PCODE: $000000C6 VOL: 0
+;PCODE: $000000C7 VOL: 0
+; 0000 0083 	lcd_set_e(); // Write data to LCD
+;PCODE: $000000C8 VOL: 0
+; 0000 0084 	delay_us(10);
+;PCODE: $000000C9 VOL: 0
+; 0000 0085 	lcd_clear_e(); // Disable LCD
+;PCODE: $000000CA VOL: 0
+; 0000 0086 	delay_us(40);
+;PCODE: $000000CB VOL: 0
+; 0000 0087 	DDRB.2 |= 0;
+;PCODE: $000000CC VOL: 0
+;PCODE: $000000CD VOL: 0
+;PCODE: $000000CE VOL: 0
+;PCODE: $000000CF VOL: 0
+;PCODE: $000000D0 VOL: 0
+;PCODE: $000000D1 VOL: 0
+;PCODE: $000000D2 VOL: 0
+;PCODE: $000000D3 VOL: 0
+;PCODE: $000000D4 VOL: 0
+;PCODE: $000000D5 VOL: 0
+;PCODE: $000000D6 VOL: 0
+;PCODE: $000000D7 VOL: 0
+; 0000 0088 }
+;PCODE: $000000D8 VOL: 0
+;PCODE: $000000D9 VOL: 0
+;//*****************************************************//
+;// This routine will return the busy flag from the LCD //
+;//*****************************************************//
+;void LCD_Busy ( void )
+; 0000 008D {
+;PCODE: $000000DA VOL: 0
+;PCODE: $000000DB VOL: 0
+; 0000 008E 	unsigned char temp,high;
+; 0000 008F 	unsigned char low;
+; 0000 0090 	LCD_DIR_PORT = 0x0f; // Make I/O Port input
+;PCODE: $000000DC VOL: 0
+;	temp -> R17
+;	high -> R16
+;	low -> R19
+;PCODE: $000000DD VOL: 0
+;PCODE: $000000DE VOL: 0
+; 0000 0091 	do
+;PCODE: $000000DF VOL: 0
+; 0000 0092 	{
+; 0000 0093 		temp=LCD_OP_PORT;
+;PCODE: $000000E0 VOL: 0
+;PCODE: $000000E1 VOL: 0
+; 0000 0094 		temp=temp&BIT3;
+;PCODE: $000000E2 VOL: 0
+;PCODE: $000000E3 VOL: 0
+; 0000 0095 		LCD_OP_PORT=temp;
+;PCODE: $000000E4 VOL: 0
+;PCODE: $000000E5 VOL: 0
+; 0000 0096 		lcd_set_rw(); // Set LCD to READ
+;PCODE: $000000E6 VOL: 0
+;PCODE: $000000E7 VOL: 0
+; 0000 0097 		lcd_clear_rs();
+;PCODE: $000000E8 VOL: 0
+;PCODE: $000000E9 VOL: 0
+; 0000 0098 		lcd_set_e();
+;PCODE: $000000EA VOL: 0
+; 0000 0099 		delay_us(3);
+;PCODE: $000000EB VOL: 0
+; 0000 009A 		high = LCD_IP_PORT; // read the high nibble.
+;PCODE: $000000EC VOL: 0
+;PCODE: $000000ED VOL: 0
+; 0000 009B 		lcd_clear_e(); // Disable LCD
+;PCODE: $000000EE VOL: 0
+; 0000 009C 		lcd_set_e();
+;PCODE: $000000EF VOL: 0
+; 0000 009D 
+; 0000 009E 		low = LCD_IP_PORT; // read the low nibble.
+;PCODE: $000000F0 VOL: 0
+;PCODE: $000000F1 VOL: 0
+; 0000 009F 		lcd_clear_e(); // Disable LCD
+;PCODE: $000000F2 VOL: 0
+; 0000 00A0 	} while(high & 0x80);
+;PCODE: $000000F3 VOL: 0
+;PCODE: $000000F4 VOL: 0
+;PCODE: $000000F5 VOL: 0
+;PCODE: $000000F6 VOL: 0
+;PCODE: $000000F7 VOL: 0
+;PCODE: $000000F8 VOL: 0
+; 0000 00A1 	delay_us(20);
+;PCODE: $000000F9 VOL: 0
+; 0000 00A2 }
+;PCODE: $000000FA VOL: 0
+;PCODE: $000000FB VOL: 0
+;PCODE: $000000FC VOL: 0
+;PCODE: $000000FD VOL: 0
+;// ********************************************** //
+;// *** Write a control instruction to the LCD *** //
+;// ********************************************** //
+;void LCD_WriteControl (unsigned char CMD)
+; 0000 00A7 {
+;PCODE: $000000FE VOL: 0
+;PCODE: $000000FF VOL: 0
+; 0000 00A8 	char temp;
+; 0000 00A9 	LCD_Busy(); // Test if LCD busy
+;PCODE: $00000100 VOL: 0
+;PCODE: $00000101 VOL: 0
+;	CMD -> Y+1
+;	temp -> R17
+;PCODE: $00000102 VOL: 0
+; 0000 00AA 	LCD_DIR_PORT = 0xff; // LCD port output
+;PCODE: $00000103 VOL: 0
+;PCODE: $00000104 VOL: 0
+; 0000 00AB 	temp=LCD_OP_PORT;
+;PCODE: $00000105 VOL: 0
+;PCODE: $00000106 VOL: 0
+; 0000 00AC 	temp=temp&BIT3;
+;PCODE: $00000107 VOL: 0
+;PCODE: $00000108 VOL: 0
+; 0000 00AD 	LCD_OP_PORT =(CMD & 0xf0)|temp; // Load high-data to port
+;PCODE: $00000109 VOL: 0
+;PCODE: $0000010A VOL: 0
+;PCODE: $0000010B VOL: 0
+;PCODE: $0000010C VOL: 0
+; 0000 00AE 	lcd_clear_rw(); // Set LCD to write
+;PCODE: $0000010D VOL: 0
+;PCODE: $0000010E VOL: 0
+; 0000 00AF 	lcd_clear_rs(); // Set LCD to command
+;PCODE: $0000010F VOL: 0
+;PCODE: $00000110 VOL: 0
+; 0000 00B0 	lcd_set_e(); // Write data to LCD
+;PCODE: $00000111 VOL: 0
+; 0000 00B1 	delay_us(10);
+;PCODE: $00000112 VOL: 0
+; 0000 00B2 	lcd_clear_e(); // Disable LCD
+;PCODE: $00000113 VOL: 0
+; 0000 00B3 	LCD_OP_PORT =(CMD<<4)|temp; // Load low-data to port
+;PCODE: $00000114 VOL: 0
+;PCODE: $00000115 VOL: 0
+;PCODE: $00000116 VOL: 0
+;PCODE: $00000117 VOL: 0
+; 0000 00B4 	lcd_clear_rw(); // Set LCD to write
+;PCODE: $00000118 VOL: 0
+;PCODE: $00000119 VOL: 0
+; 0000 00B5 	lcd_clear_rs(); // Set LCD to command
+;PCODE: $0000011A VOL: 0
+;PCODE: $0000011B VOL: 0
+; 0000 00B6 	lcd_set_e(); // Write data to LCD
+;PCODE: $0000011C VOL: 0
+; 0000 00B7 	delay_us(10);
+;PCODE: $0000011D VOL: 0
+; 0000 00B8 	lcd_clear_e(); // Disable LCD
+;PCODE: $0000011E VOL: 0
+; 0000 00B9 }
+;PCODE: $0000011F VOL: 0
+;PCODE: $00000120 VOL: 0
+;PCODE: $00000121 VOL: 0
+;PCODE: $00000122 VOL: 0
+;PCODE: $00000123 VOL: 0
+;// ***************************************** //
+;// *** Write one byte of data to the LCD *** //
+;// ***************************************** //
+;void LCD_WriteData (unsigned char Data)
+; 0000 00BE {
+;PCODE: $00000124 VOL: 0
+;PCODE: $00000125 VOL: 0
+; 0000 00BF 	char temp;
+; 0000 00C0 	LCD_Busy(); // Test if LCD Busy
+;PCODE: $00000126 VOL: 0
+;PCODE: $00000127 VOL: 0
+;	Data -> Y+1
+;	temp -> R17
+;PCODE: $00000128 VOL: 0
+; 0000 00C1 	LCD_DIR_PORT = 0xFF; // LCD port output
+;PCODE: $00000129 VOL: 0
+;PCODE: $0000012A VOL: 0
+; 0000 00C2 	temp=LCD_OP_PORT;
+;PCODE: $0000012B VOL: 0
+;PCODE: $0000012C VOL: 0
+; 0000 00C3 	temp=temp&BIT3;
+;PCODE: $0000012D VOL: 0
+;PCODE: $0000012E VOL: 0
+; 0000 00C4 	LCD_OP_PORT =(Data & 0xf0)|temp; // Load high-data to port
+;PCODE: $0000012F VOL: 0
+;PCODE: $00000130 VOL: 0
+;PCODE: $00000131 VOL: 0
+;PCODE: $00000132 VOL: 0
+; 0000 00C5 	lcd_clear_rw() ; // Set LCD to write
+;PCODE: $00000133 VOL: 0
+;PCODE: $00000134 VOL: 0
+; 0000 00C6 	lcd_set_rs(); // Set LCD to data
+;PCODE: $00000135 VOL: 0
+;PCODE: $00000136 VOL: 0
+; 0000 00C7 	lcd_set_e(); // Write data to LCD
+;PCODE: $00000137 VOL: 0
+; 0000 00C8 	delay_us(10);
+;PCODE: $00000138 VOL: 0
+; 0000 00C9 	lcd_clear_e(); // Disable LCD
+;PCODE: $00000139 VOL: 0
+; 0000 00CA 	LCD_OP_PORT = (Data << 4)|temp; // Load low-data to port
+;PCODE: $0000013A VOL: 0
+;PCODE: $0000013B VOL: 0
+;PCODE: $0000013C VOL: 0
+;PCODE: $0000013D VOL: 0
+; 0000 00CB 	lcd_clear_rw() ; // Set LCD to write
+;PCODE: $0000013E VOL: 0
+;PCODE: $0000013F VOL: 0
+; 0000 00CC 	lcd_set_rs(); // Set LCD to data
+;PCODE: $00000140 VOL: 0
+;PCODE: $00000141 VOL: 0
+; 0000 00CD 	lcd_set_e(); // Write data to LCD
+;PCODE: $00000142 VOL: 0
+; 0000 00CE 	delay_us(10);
+;PCODE: $00000143 VOL: 0
+; 0000 00CF 	lcd_clear_e(); // Disable LCD
+;PCODE: $00000144 VOL: 0
+; 0000 00D0 }
+;PCODE: $00000145 VOL: 0
+;PCODE: $00000146 VOL: 0
+;PCODE: $00000147 VOL: 0
+;PCODE: $00000148 VOL: 0
+;PCODE: $00000149 VOL: 0
+;// ********************************* //
+;// *** Initialize the LCD driver *** //
+;// ********************************* //
+;void Init_LCD(void)
+; 0000 00D5 {
+;PCODE: $0000014A VOL: 0
+;PCODE: $0000014B VOL: 0
+; 0000 00D6 	LCD_INIT();
+;PCODE: $0000014C VOL: 0
+; 0000 00D7 	LCD_WriteControl (LCD_FUNCTION_SET);
+;PCODE: $0000014D VOL: 0
+;PCODE: $0000014E VOL: 0
+; 0000 00D8 	LCD_WriteControl (LCD_OFF);
+;PCODE: $0000014F VOL: 0
+;PCODE: $00000150 VOL: 0
+; 0000 00D9 	LCD_WriteControl (LCD_CLEAR);
+;PCODE: $00000151 VOL: 0
+;PCODE: $00000152 VOL: 0
+; 0000 00DA 	LCD_WriteControl (LCD_MODE_SET);
+;PCODE: $00000153 VOL: 0
+;PCODE: $00000154 VOL: 0
+; 0000 00DB 	LCD_WriteControl (LCD_ON);
+;PCODE: $00000155 VOL: 0
+;PCODE: $00000156 VOL: 0
+; 0000 00DC 	LCD_WriteControl (LCD_HOME);
+;PCODE: $00000157 VOL: 0
+;PCODE: $00000158 VOL: 0
+; 0000 00DD }
+;PCODE: $00000159 VOL: 0
+;PCODE: $0000015A VOL: 0
+;// ************************************************ //
+;// *** Clear the LCD screen (also homes cursor) *** //
+;// ************************************************ //
+;void LCD_Clear(void)
+; 0000 00E2 {
+;PCODE: $0000015B VOL: 0
+;PCODE: $0000015C VOL: 0
+; 0000 00E3 	LCD_WriteControl(0x01);
+;PCODE: $0000015D VOL: 0
+;PCODE: $0000015E VOL: 0
+; 0000 00E4 }
+;PCODE: $0000015F VOL: 0
+;PCODE: $00000160 VOL: 0
+;// *********************************************** //
+;// *** Position the LCD cursor at row 1, col 1 *** //
+;// *********************************************** //
+;void LCD_Home(void)
+; 0000 00E9 {
+;PCODE: $00000161 VOL: 0
+;PCODE: $00000162 VOL: 0
+; 0000 00EA 	LCD_WriteControl(0x02);
+;PCODE: $00000163 VOL: 0
+;PCODE: $00000164 VOL: 0
+; 0000 00EB }
+;PCODE: $00000165 VOL: 0
+;PCODE: $00000166 VOL: 0
+;// ****************************************************************** //
+;// *** Display a single character, at the current cursor location *** //
+;// ****************************************************************** //
+;void LCD_DisplayCharacter (char Char)
+; 0000 00F0 {
+;PCODE: $00000167 VOL: 0
+;PCODE: $00000168 VOL: 0
+; 0000 00F1 	LCD_WriteData (Char);
+;PCODE: $00000169 VOL: 0
+;	Char -> Y+0
+;PCODE: $0000016A VOL: 0
+;PCODE: $0000016B VOL: 0
+; 0000 00F2 }
+;PCODE: $0000016C VOL: 0
+;PCODE: $0000016D VOL: 0
+;PCODE: $0000016E VOL: 0
+;// ********************************************************************* //
+;// *** Display a string at the specified row and column, using FLASH *** //
+;// ********************************************************************* //
+;void LCD_DisplayString_F (char row, char column , unsigned char __flash *string)
+; 0000 00F7 {
+;PCODE: $0000016F VOL: 0
+;PCODE: $00000170 VOL: 0
+; 0000 00F8 	LCD_Cursor (row, column);
+;PCODE: $00000171 VOL: 0
+;	row -> Y+3
+;	column -> Y+2
+;	*string -> Y+0
+;PCODE: $00000172 VOL: 0
+;PCODE: $00000173 VOL: 0
+;PCODE: $00000174 VOL: 0
+;PCODE: $00000175 VOL: 0
+; 0000 00F9 	while (*string)
+;PCODE: $00000176 VOL: 0
+;PCODE: $00000177 VOL: 0
+;PCODE: $00000178 VOL: 0
+;PCODE: $00000179 VOL: 0
+;PCODE: $0000017A VOL: 0
+; 0000 00FA 	{
+; 0000 00FB 	LCD_DisplayCharacter (*string++);
+;PCODE: $0000017B VOL: 0
+;PCODE: $0000017C VOL: 0
+;PCODE: $0000017D VOL: 0
+;PCODE: $0000017E VOL: 0
+;PCODE: $0000017F VOL: 0
+;PCODE: $00000180 VOL: 0
+; 0000 00FC 	}
+;PCODE: $00000181 VOL: 0
+;PCODE: $00000182 VOL: 0
+; 0000 00FD }
+;PCODE: $00000183 VOL: 0
+;PCODE: $00000184 VOL: 0
+;PCODE: $00000185 VOL: 0
+;// ******************************************************************* //
+;// *** Display a string at the specified row and column, using RAM *** //
+;// ******************************************************************* //
+;void LCD_DisplayString (char row, char column ,unsigned char *string)
+; 0000 0102 {
+;PCODE: $00000186 VOL: 0
+;PCODE: $00000187 VOL: 0
+; 0000 0103 	LCD_Cursor (row, column);
+;PCODE: $00000188 VOL: 0
+;	row -> Y+3
+;	column -> Y+2
+;	*string -> Y+0
+;PCODE: $00000189 VOL: 0
+;PCODE: $0000018A VOL: 0
+;PCODE: $0000018B VOL: 0
+;PCODE: $0000018C VOL: 0
+; 0000 0104 	while (*string)
+;PCODE: $0000018D VOL: 0
+;PCODE: $0000018E VOL: 0
+;PCODE: $0000018F VOL: 0
+;PCODE: $00000190 VOL: 0
+;PCODE: $00000191 VOL: 0
+; 0000 0105 		LCD_DisplayCharacter (*string++);
+;PCODE: $00000192 VOL: 0
+;PCODE: $00000193 VOL: 0
+;PCODE: $00000194 VOL: 0
+;PCODE: $00000195 VOL: 0
+;PCODE: $00000196 VOL: 0
+;PCODE: $00000197 VOL: 0
+;PCODE: $00000198 VOL: 0
+; 0000 0106 }
+;PCODE: $00000199 VOL: 0
+;PCODE: $0000019A VOL: 0
+;PCODE: $0000019B VOL: 0
+;// *************************************************** //
+;// *** Position the LCD cursor at "row", "column". *** //
+;// *************************************************** //
+;void LCD_Cursor (char row, char column)
+; 0000 010B {
+;PCODE: $0000019C VOL: 0
+;PCODE: $0000019D VOL: 0
+; 0000 010C 	switch (row) {
+;PCODE: $0000019E VOL: 0
+;	row -> Y+1
+;	column -> Y+0
+;PCODE: $0000019F VOL: 0
+;PCODE: $000001A0 VOL: 0
+; 0000 010D 	case 1: LCD_WriteControl (0x80 + column - 1); break;
+;PCODE: $000001A1 VOL: 0
+;PCODE: $000001A2 VOL: 0
+;PCODE: $000001A3 VOL: 0
+;PCODE: $000001A4 VOL: 0
+;PCODE: $000001A5 VOL: 0
+;PCODE: $000001A6 VOL: 0
+;PCODE: $000001A7 VOL: 0
+; 0000 010E 	case 2: LCD_WriteControl (0xc0 + column - 1); break;
+;PCODE: $000001A8 VOL: 0
+;PCODE: $000001A9 VOL: 0
+;PCODE: $000001AA VOL: 0
+;PCODE: $000001AB VOL: 0
+;PCODE: $000001AC VOL: 0
+;PCODE: $000001AD VOL: 0
+;PCODE: $000001AE VOL: 0
+;PCODE: $000001AF VOL: 0
+; 0000 010F 	case 3: LCD_WriteControl (0x94 + column - 1); break;
+;PCODE: $000001B0 VOL: 0
+;PCODE: $000001B1 VOL: 0
+;PCODE: $000001B2 VOL: 0
+;PCODE: $000001B3 VOL: 0
+;PCODE: $000001B4 VOL: 0
+;PCODE: $000001B5 VOL: 0
+;PCODE: $000001B6 VOL: 0
+;PCODE: $000001B7 VOL: 0
+; 0000 0110 	case 4: LCD_WriteControl (0xd4 + column - 1); break;
+;PCODE: $000001B8 VOL: 0
+;PCODE: $000001B9 VOL: 0
+;PCODE: $000001BA VOL: 0
+;PCODE: $000001BB VOL: 0
+;PCODE: $000001BC VOL: 0
+;PCODE: $000001BD VOL: 0
+;PCODE: $000001BE VOL: 0
+;PCODE: $000001BF VOL: 0
+; 0000 0111 	default: break;
+;PCODE: $000001C0 VOL: 0
+;PCODE: $000001C1 VOL: 0
+; 0000 0112 }
+;PCODE: $000001C2 VOL: 0
+; 0000 0113 }
+;PCODE: $000001C3 VOL: 0
+;PCODE: $000001C4 VOL: 0
+;PCODE: $000001C5 VOL: 0
+;// ************************** //
+;// *** Turn the cursor on *** //
+;// ************************** //
+;void LCD_Cursor_On (void)
+; 0000 0118 {
+;PCODE: $000001C6 VOL: 0
+;PCODE: $000001C7 VOL: 0
+; 0000 0119 	LCD_WriteControl (LCD_CURS_ON);
+;PCODE: $000001C8 VOL: 0
+;PCODE: $000001C9 VOL: 0
+; 0000 011A }
+;PCODE: $000001CA VOL: 0
+;PCODE: $000001CB VOL: 0
+;// *************************** //
+;// *** Turn the cursor off *** //
+;// *************************** //
+;void LCD_Cursor_Off (void)
+; 0000 011F {
+;PCODE: $000001CC VOL: 0
+;PCODE: $000001CD VOL: 0
+; 0000 0120 	LCD_WriteControl (LCD_ON);
+;PCODE: $000001CE VOL: 0
+;PCODE: $000001CF VOL: 0
+; 0000 0121 }
+;PCODE: $000001D0 VOL: 0
+;PCODE: $000001D1 VOL: 0
+;// ******************** //
+;// *** Turn Off LCD *** //
+;// ******************** //
+;void LCD_Display_Off (void)
+; 0000 0126 {
+;PCODE: $000001D2 VOL: 0
+;PCODE: $000001D3 VOL: 0
+; 0000 0127 	LCD_WriteControl(LCD_OFF);
+;PCODE: $000001D4 VOL: 0
+;PCODE: $000001D5 VOL: 0
+; 0000 0128 }
+;PCODE: $000001D6 VOL: 0
+;PCODE: $000001D7 VOL: 0
+;// ******************* //
+;// *** Turn On LCD *** //
+;// ******************* //
+;void LCD_Display_On (void)
+; 0000 012D {
+;PCODE: $000001D8 VOL: 0
+;PCODE: $000001D9 VOL: 0
+; 0000 012E 	LCD_WriteControl(LCD_ON);
+;PCODE: $000001DA VOL: 0
+;PCODE: $000001DB VOL: 0
+; 0000 012F }
+;PCODE: $000001DC VOL: 0
+;PCODE: $000001DD VOL: 0
+;
+;uchar Read_DS18B20(void)
+; 0000 0132 {
+;PCODE: $000001DE VOL: 0
+;PCODE: $000001DF VOL: 0
+; 0000 0133     uchar value = 0;
+; 0000 0134     int i;
+; 0000 0135     for(i=0;i<8;i++)
+;PCODE: $000001E0 VOL: 0
+;	value -> R17
+;	i -> R18,R19
+;PCODE: $000001E1 VOL: 0
+;PCODE: $000001E2 VOL: 0
+;PCODE: $000001E3 VOL: 0
+;PCODE: $000001E4 VOL: 0
+;PCODE: $000001E5 VOL: 0
+;PCODE: $000001E6 VOL: 0
+;PCODE: $000001E7 VOL: 0
+;PCODE: $000001E8 VOL: 0
+;PCODE: $000001E9 VOL: 0
+;PCODE: $000001EA VOL: 0
+;PCODE: $000001EB VOL: 0
+; 0000 0136     {
+; 0000 0137         //主机拉低总线并释放
+; 0000 0138         DQ_DIR_OUT();
+;PCODE: $000001EC VOL: 0
+;PCODE: $000001ED VOL: 0
+; 0000 0139         DQ_SET();
+;PCODE: $000001EE VOL: 0
+;PCODE: $000001EF VOL: 0
+; 0000 013A         delay_us(1);
+;PCODE: $000001F0 VOL: 0
+; 0000 013B         DQ_CLEAR();
+;PCODE: $000001F1 VOL: 0
+;PCODE: $000001F2 VOL: 0
+; 0000 013C         delay_us(1);
+;PCODE: $000001F3 VOL: 0
+; 0000 013D         DQ_SET();
+;PCODE: $000001F4 VOL: 0
+;PCODE: $000001F5 VOL: 0
+; 0000 013E         //读数据位
+; 0000 013F         DQ_DIR_IN();
+;PCODE: $000001F6 VOL: 0
+;PCODE: $000001F7 VOL: 0
+; 0000 0140         delay_us(7);
+;PCODE: $000001F8 VOL: 0
+; 0000 0141         value |= (DQ_DATA<<i);
+;PCODE: $000001F9 VOL: 0
+;PCODE: $000001FA VOL: 0
+;PCODE: $000001FB VOL: 0
+;PCODE: $000001FC VOL: 0
+;PCODE: $000001FD VOL: 0
+;PCODE: $000001FE VOL: 0
+;PCODE: $000001FF VOL: 0
+;PCODE: $00000200 VOL: 0
+;PCODE: $00000201 VOL: 0
+; 0000 0142         delay_us(70);
+;PCODE: $00000202 VOL: 0
+; 0000 0143     }
+;PCODE: $00000203 VOL: 0
+;PCODE: $00000204 VOL: 0
+;PCODE: $00000205 VOL: 0
+;PCODE: $00000206 VOL: 0
+;PCODE: $00000207 VOL: 0
+; 0000 0144     return value;
+;PCODE: $00000208 VOL: 0
+;PCODE: $00000209 VOL: 0
+;PCODE: $0000020A VOL: 0
+;PCODE: $0000020B VOL: 0
+; 0000 0145 }
+;PCODE: $0000020C VOL: 0
+;
+;uchar Write_DS18B20(uchar value)
+; 0000 0148 {
+;PCODE: $0000020D VOL: 0
+;PCODE: $0000020E VOL: 0
+; 0000 0149     int i;
+; 0000 014A     DQ_DIR_OUT();
+;PCODE: $0000020F VOL: 0
+;PCODE: $00000210 VOL: 0
+;PCODE: $00000211 VOL: 0
+;	value -> Y+2
+;	i -> R16,R17
+;PCODE: $00000212 VOL: 0
+;PCODE: $00000213 VOL: 0
+; 0000 014B     for(i=0;i<8;i++)
+;PCODE: $00000214 VOL: 0
+;PCODE: $00000215 VOL: 0
+;PCODE: $00000216 VOL: 0
+;PCODE: $00000217 VOL: 0
+;PCODE: $00000218 VOL: 0
+;PCODE: $00000219 VOL: 0
+;PCODE: $0000021A VOL: 0
+;PCODE: $0000021B VOL: 0
+;PCODE: $0000021C VOL: 0
+; 0000 014C     {
+; 0000 014D         //主机拉低总线
+; 0000 014E         DQ_SET();
+;PCODE: $0000021D VOL: 0
+;PCODE: $0000021E VOL: 0
+; 0000 014F         delay_us(1);
+;PCODE: $0000021F VOL: 0
+; 0000 0150         DQ_CLEAR();
+;PCODE: $00000220 VOL: 0
+;PCODE: $00000221 VOL: 0
+; 0000 0151         //写数据位
+; 0000 0152         if(((value&(1<<i)))!=0)
+;PCODE: $00000222 VOL: 0
+;PCODE: $00000223 VOL: 0
+;PCODE: $00000224 VOL: 0
+;PCODE: $00000225 VOL: 0
+;PCODE: $00000226 VOL: 0
+;PCODE: $00000227 VOL: 0
+;PCODE: $00000228 VOL: 0
+;PCODE: $00000229 VOL: 0
+; 0000 0153         {
+; 0000 0154             DQ_SET();
+;PCODE: $0000022A VOL: 0
+;PCODE: $0000022B VOL: 0
+; 0000 0155         }
+; 0000 0156         else
+;PCODE: $0000022C VOL: 0
+;PCODE: $0000022D VOL: 0
+; 0000 0157         {
+; 0000 0158             DQ_CLEAR();
+;PCODE: $0000022E VOL: 0
+;PCODE: $0000022F VOL: 0
+; 0000 0159         }
+;PCODE: $00000230 VOL: 0
+; 0000 015A         delay_us(70);
+;PCODE: $00000231 VOL: 0
+; 0000 015B         DQ_SET();
+;PCODE: $00000232 VOL: 0
+;PCODE: $00000233 VOL: 0
+; 0000 015C         delay_us(10);
+;PCODE: $00000234 VOL: 0
+; 0000 015D     }
+;PCODE: $00000235 VOL: 0
+;PCODE: $00000236 VOL: 0
+;PCODE: $00000237 VOL: 0
+;PCODE: $00000238 VOL: 0
+;PCODE: $00000239 VOL: 0
+; 0000 015E     delay_us(10);
+;PCODE: $0000023A VOL: 0
+; 0000 015F }
+;PCODE: $0000023B VOL: 0
+;PCODE: $0000023C VOL: 0
+;PCODE: $0000023D VOL: 0
+;PCODE: $0000023E VOL: 0
+;PCODE: $0000023F VOL: 0
+;PCODE: $00000240 VOL: 0
+;PCODE: $00000241 VOL: 0
+;
+;
+;
+;//读取温度
+;int Read_Temperature(void)
+; 0000 0165 {
+;PCODE: $00000242 VOL: 0
+;PCODE: $00000243 VOL: 0
+; 0000 0166     char temp_l, temp_h;
+; 0000 0167     int temp;
+; 0000 0168     #asm("cli")
+;PCODE: $00000244 VOL: 0
+;	temp_l -> R17
+;	temp_h -> R16
+;	temp -> R18,R19
+;PCODE: $00000245 VOL: 0
+	cli
+;PCODE: $00000246 VOL: 0
+; 0000 0169     Init_DS18B20();
+;PCODE: $00000247 VOL: 0
+; 0000 016A     Write_DS18B20(0xCC); //跳过ROM
+;PCODE: $00000248 VOL: 0
+;PCODE: $00000249 VOL: 0
+; 0000 016B     Write_DS18B20(0x44); //温度转换
+;PCODE: $0000024A VOL: 0
+;PCODE: $0000024B VOL: 0
+; 0000 016C     #asm("sei");
+;PCODE: $0000024C VOL: 0
+	sei
+;PCODE: $0000024D VOL: 0
+; 0000 016D     delay_ms(200); //等待温度转换
+;PCODE: $0000024E VOL: 0
+;PCODE: $0000024F VOL: 0
+;PCODE: $00000250 VOL: 0
+; 0000 016E     #asm("cli")
+;PCODE: $00000251 VOL: 0
+	cli
+;PCODE: $00000252 VOL: 0
+; 0000 016F     Init_DS18B20();
+;PCODE: $00000253 VOL: 0
+; 0000 0170     Write_DS18B20(0xCC); //跳过ROM
+;PCODE: $00000254 VOL: 0
+;PCODE: $00000255 VOL: 0
+; 0000 0171     Write_DS18B20(0xBE); //读RAM数据
+;PCODE: $00000256 VOL: 0
+;PCODE: $00000257 VOL: 0
+; 0000 0172     temp_l = Read_DS18B20(); //读前两字节数据
+;PCODE: $00000258 VOL: 0
+;PCODE: $00000259 VOL: 0
+; 0000 0173     temp_h = Read_DS18B20();
+;PCODE: $0000025A VOL: 0
+;PCODE: $0000025B VOL: 0
+; 0000 0174     #asm("sei")
+;PCODE: $0000025C VOL: 0
+	sei
+;PCODE: $0000025D VOL: 0
+; 0000 0175     if((temp_h&0xf8)!=0x00)
+;PCODE: $0000025E VOL: 0
+;PCODE: $0000025F VOL: 0
+;PCODE: $00000260 VOL: 0
+; 0000 0176     {
+; 0000 0177         state=1;         //此时温度为零下，即为负数
+;PCODE: $00000261 VOL: 0
+;PCODE: $00000262 VOL: 0
+; 0000 0178         temp_h=~temp_h;
+;PCODE: $00000263 VOL: 0
+; 0000 0179         temp_l=~temp_l;
+;PCODE: $00000264 VOL: 0
+; 0000 017A         temp_l +=1;
+;PCODE: $00000265 VOL: 0
+;PCODE: $00000266 VOL: 0
+; 0000 017B         if(temp_l>255)
+;PCODE: $00000267 VOL: 0
+;PCODE: $00000268 VOL: 0
+;PCODE: $00000269 VOL: 0
+; 0000 017C             temp_h++;
+;PCODE: $0000026A VOL: 0
+;PCODE: $0000026B VOL: 0
+; 0000 017D     }
+;PCODE: $0000026C VOL: 0
+; 0000 017E         temp=temp_h;
+;PCODE: $0000026D VOL: 0
+;PCODE: $0000026E VOL: 0
+;PCODE: $0000026F VOL: 0
+;PCODE: $00000270 VOL: 0
+; 0000 017F         temp&=0x07;
+;PCODE: $00000271 VOL: 0
+;PCODE: $00000272 VOL: 0
+; 0000 0180         temp=((temp_h*256)+temp_l)*0.625+0.5;
+;PCODE: $00000273 VOL: 0
+;PCODE: $00000274 VOL: 0
+;PCODE: $00000275 VOL: 0
+;PCODE: $00000276 VOL: 0
+;PCODE: $00000277 VOL: 0
+;PCODE: $00000278 VOL: 0
+;PCODE: $00000279 VOL: 0
+;PCODE: $0000027A VOL: 0
+;PCODE: $0000027B VOL: 0
+;PCODE: $0000027C VOL: 0
+;PCODE: $0000027D VOL: 0
+;PCODE: $0000027E VOL: 0
+;PCODE: $0000027F VOL: 0
+;PCODE: $00000280 VOL: 0
+;PCODE: $00000281 VOL: 0
+; 0000 0181     //处理数据
+; 0000 0182     //temp = (temp_h*256+temp_l)*6.25;
+; 0000 0183     return temp/10;
+;PCODE: $00000282 VOL: 0
+;PCODE: $00000283 VOL: 0
+;PCODE: $00000284 VOL: 0
+;PCODE: $00000285 VOL: 0
+;PCODE: $00000286 VOL: 0
+;PCODE: $00000287 VOL: 0
+; 0000 0184 }
+;PCODE: $00000288 VOL: 0
+;
+;
+;
+;void main(void)
+; 0000 0189 {
+;PCODE: $00000289 VOL: 0
+; 0000 018A     #asm("sei")
+;PCODE: $0000028A VOL: 0
+	sei
+;PCODE: $0000028B VOL: 0
+; 0000 018B     Init_LCD();
+;PCODE: $0000028C VOL: 0
+; 0000 018C     LCD_Clear();
+;PCODE: $0000028D VOL: 0
+; 0000 018D     DDRA=11111000;
+;PCODE: $0000028E VOL: 0
+;PCODE: $0000028F VOL: 0
+; 0000 018E     PORTA=00000111;
+;PCODE: $00000290 VOL: 0
+;PCODE: $00000291 VOL: 0
+; 0000 018F     DDRD.6=0;
+;PCODE: $00000292 VOL: 0
+;PCODE: $00000293 VOL: 0
+; 0000 0190     PORTD.6=1;
+;PCODE: $00000294 VOL: 0
+;PCODE: $00000295 VOL: 0
+; 0000 0191     DDRD.7=0;
+;PCODE: $00000296 VOL: 0
+;PCODE: $00000297 VOL: 0
+; 0000 0192     PORTD.7=1;
+;PCODE: $00000298 VOL: 0
+;PCODE: $00000299 VOL: 0
+; 0000 0193     DDRD.0=1;
+;PCODE: $0000029A VOL: 0
+;PCODE: $0000029B VOL: 0
+; 0000 0194     PORTD.0=1;
+;PCODE: $0000029C VOL: 0
+;PCODE: $0000029D VOL: 0
+; 0000 0195     GICR |= 0xE0; //INT2：On；INT1: On；INT0: On
+;PCODE: $0000029E VOL: 0
+;PCODE: $0000029F VOL: 0
+;PCODE: $000002A0 VOL: 0
+; 0000 0196     MCUCR = 0x0A; //INT1、INT0下降沿产生中断
+;PCODE: $000002A1 VOL: 0
+;PCODE: $000002A2 VOL: 0
+; 0000 0197     MCUCSR = 0x00;//INT2：下降沿产生中断
+;PCODE: $000002A3 VOL: 0
+;PCODE: $000002A4 VOL: 0
+; 0000 0198     GIFR = 0xE0; //清除INT2、INT1、INT0中断标志
+;PCODE: $000002A5 VOL: 0
+;PCODE: $000002A6 VOL: 0
+; 0000 0199     LED_WHITE = 0;
+;PCODE: $000002A7 VOL: 0
+;PCODE: $000002A8 VOL: 0
+; 0000 019A     RELAY = 0;
+;PCODE: $000002A9 VOL: 0
+;PCODE: $000002AA VOL: 0
+; 0000 019B     LED_YELLOW = 0;
+;PCODE: $000002AB VOL: 0
+;PCODE: $000002AC VOL: 0
+; 0000 019C     FAN = 0; //上电检测下 方便检测硬件
+;PCODE: $000002AD VOL: 0
+;PCODE: $000002AE VOL: 0
+; 0000 019D     delay_ms(200);
+;PCODE: $000002AF VOL: 0
+;PCODE: $000002B0 VOL: 0
+;PCODE: $000002B1 VOL: 0
+; 0000 019E     LED_WHITE = 1;
+;PCODE: $000002B2 VOL: 0
+;PCODE: $000002B3 VOL: 0
+; 0000 019F     RELAY = 1;
+;PCODE: $000002B4 VOL: 0
+;PCODE: $000002B5 VOL: 0
+; 0000 01A0     LED_YELLOW = 1;
+;PCODE: $000002B6 VOL: 0
+;PCODE: $000002B7 VOL: 0
+; 0000 01A1     FAN = 0;
+;PCODE: $000002B8 VOL: 0
+;PCODE: $000002B9 VOL: 0
+; 0000 01A2 
+; 0000 01A3     while (1)
+;PCODE: $000002BA VOL: 0
+; 0000 01A4       {
+; 0000 01A5          dispTemp = Read_Temperature();
+;PCODE: $000002BB VOL: 0
+;PCODE: $000002BC VOL: 0
+; 0000 01A6          midval = ReadADC(1);                    //转换的结果，在下次，才能读出
+;PCODE: $000002BD VOL: 0
+;PCODE: $000002BE VOL: 0
+;PCODE: $000002BF VOL: 0
+; 0000 01A7          Lv = 5.00 - (float)midval * 5.00 / 255; //光照
+;PCODE: $000002C0 VOL: 0
+;PCODE: $000002C1 VOL: 0
+;PCODE: $000002C2 VOL: 0
+;PCODE: $000002C3 VOL: 0
+;PCODE: $000002C4 VOL: 0
+;PCODE: $000002C5 VOL: 0
+;PCODE: $000002C6 VOL: 0
+;PCODE: $000002C7 VOL: 0
+;PCODE: $000002C8 VOL: 0
+;PCODE: $000002C9 VOL: 0
+;PCODE: $000002CA VOL: 0
+; 0000 01A8          Lval = (unsigned int)(Lv *99) / 5.00;
+;PCODE: $000002CB VOL: 0
+;PCODE: $000002CC VOL: 0
+;PCODE: $000002CD VOL: 0
+;PCODE: $000002CE VOL: 0
+;PCODE: $000002CF VOL: 0
+;PCODE: $000002D0 VOL: 0
+;PCODE: $000002D1 VOL: 0
+;PCODE: $000002D2 VOL: 0
+;PCODE: $000002D3 VOL: 0
+;PCODE: $000002D4 VOL: 0
+;PCODE: $000002D5 VOL: 0
+; 0000 01A9          delay_ms(10); //延时有助于稳定
+;PCODE: $000002D6 VOL: 0
+;PCODE: $000002D7 VOL: 0
+;PCODE: $000002D8 VOL: 0
+; 0000 01AA          midval = ReadADC(0);                    //读取AD检测到的
+;PCODE: $000002D9 VOL: 0
+;PCODE: $000002DA VOL: 0
+;PCODE: $000002DB VOL: 0
+; 0000 01AB          Tv = 5.00 - (float)midval * 5.00 / 255; //土壤湿度
+;PCODE: $000002DC VOL: 0
+;PCODE: $000002DD VOL: 0
+;PCODE: $000002DE VOL: 0
+;PCODE: $000002DF VOL: 0
+;PCODE: $000002E0 VOL: 0
+;PCODE: $000002E1 VOL: 0
+;PCODE: $000002E2 VOL: 0
+;PCODE: $000002E3 VOL: 0
+;PCODE: $000002E4 VOL: 0
+;PCODE: $000002E5 VOL: 0
+;PCODE: $000002E6 VOL: 0
+; 0000 01AC          Rval = (unsigned int)(Tv *99) / 5.00;
+;PCODE: $000002E7 VOL: 0
+;PCODE: $000002E8 VOL: 0
+;PCODE: $000002E9 VOL: 0
+;PCODE: $000002EA VOL: 0
+;PCODE: $000002EB VOL: 0
+;PCODE: $000002EC VOL: 0
+;PCODE: $000002ED VOL: 0
+;PCODE: $000002EE VOL: 0
+;PCODE: $000002EF VOL: 0
+;PCODE: $000002F0 VOL: 0
+;PCODE: $000002F1 VOL: 0
+;PCODE: $000002F2 VOL: 0
+; 0000 01AD          delay_ms(20);
+;PCODE: $000002F3 VOL: 0
+;PCODE: $000002F4 VOL: 0
+;PCODE: $000002F5 VOL: 0
+; 0000 01AE          sprintf(disdat, "L:%2d R:%2d T:%2d", Lval, Rval, dispTemp); //打印电压电流值
+;PCODE: $000002F6 VOL: 0
+;PCODE: $000002F7 VOL: 0
+;PCODE: $000002F8 VOL: 0
+;PCODE: $000002F9 VOL: 0
+;PCODE: $000002FA VOL: 0
+;PCODE: $000002FB VOL: 0
+;PCODE: $000002FC VOL: 0
+;PCODE: $000002FD VOL: 0
+;PCODE: $000002FE VOL: 0
+;PCODE: $000002FF VOL: 0
+;PCODE: $00000300 VOL: 0
+;PCODE: $00000301 VOL: 0
+;PCODE: $00000302 VOL: 0
+;PCODE: $00000303 VOL: 0
+;PCODE: $00000304 VOL: 0
+;PCODE: $00000305 VOL: 0
+;PCODE: $00000306 VOL: 0
+;PCODE: $00000307 VOL: 0
+; 0000 01AF          LCD_DisplayString(1, 2, disdat);
+;PCODE: $00000308 VOL: 0
+;PCODE: $00000309 VOL: 0
+;PCODE: $0000030A VOL: 0
+;PCODE: $0000030B VOL: 0
+;PCODE: $0000030C VOL: 0
+;PCODE: $0000030D VOL: 0
+; 0000 01B0          if (setIndex == 1) //进入设置
+;PCODE: $0000030E VOL: 0
+;PCODE: $0000030F VOL: 0
+;PCODE: $00000310 VOL: 0
+; 0000 01B1             {
+; 0000 01B2                 sprintf(disset, "*L:%2d R:%2d T:%2d ", (unsigned int)setLval, (unsigned int)setRval, (unsigned int)setTv ...
+;PCODE: $00000311 VOL: 0
+;PCODE: $00000312 VOL: 0
+;PCODE: $00000313 VOL: 0
+;PCODE: $00000314 VOL: 0
+;PCODE: $00000315 VOL: 0
+;PCODE: $00000316 VOL: 0
+;PCODE: $00000317 VOL: 0
+;PCODE: $00000318 VOL: 0
+;PCODE: $00000319 VOL: 0
+;PCODE: $0000031A VOL: 0
+;PCODE: $0000031B VOL: 0
+;PCODE: $0000031C VOL: 0
+;PCODE: $0000031D VOL: 0
+;PCODE: $0000031E VOL: 0
+;PCODE: $0000031F VOL: 0
+;PCODE: $00000320 VOL: 0
+;PCODE: $00000321 VOL: 0
+;PCODE: $00000322 VOL: 0
+;PCODE: $00000323 VOL: 0
+;PCODE: $00000324 VOL: 0
+;PCODE: $00000325 VOL: 0
+; 0000 01B3             }
+; 0000 01B4          else if (setIndex == 2)
+;PCODE: $00000326 VOL: 0
+;PCODE: $00000327 VOL: 0
+;PCODE: $00000328 VOL: 0
+;PCODE: $00000329 VOL: 0
+;PCODE: $0000032A VOL: 0
+; 0000 01B5             {
+; 0000 01B6                 sprintf(disset, " L:%2d*R:%2d T:%2d ", (unsigned int)setLval, (unsigned int)setRval, (unsigned int)setTv ...
+;PCODE: $0000032B VOL: 0
+;PCODE: $0000032C VOL: 0
+;PCODE: $0000032D VOL: 0
+;PCODE: $0000032E VOL: 0
+;PCODE: $0000032F VOL: 0
+;PCODE: $00000330 VOL: 0
+;PCODE: $00000331 VOL: 0
+;PCODE: $00000332 VOL: 0
+;PCODE: $00000333 VOL: 0
+;PCODE: $00000334 VOL: 0
+;PCODE: $00000335 VOL: 0
+;PCODE: $00000336 VOL: 0
+;PCODE: $00000337 VOL: 0
+;PCODE: $00000338 VOL: 0
+;PCODE: $00000339 VOL: 0
+;PCODE: $0000033A VOL: 0
+;PCODE: $0000033B VOL: 0
+;PCODE: $0000033C VOL: 0
+;PCODE: $0000033D VOL: 0
+;PCODE: $0000033E VOL: 0
+;PCODE: $0000033F VOL: 0
+; 0000 01B7             }
+; 0000 01B8          else if (setIndex == 3)
+;PCODE: $00000340 VOL: 0
+;PCODE: $00000341 VOL: 0
+;PCODE: $00000342 VOL: 0
+;PCODE: $00000343 VOL: 0
+;PCODE: $00000344 VOL: 0
+; 0000 01B9             {
+; 0000 01BA                 sprintf(disset, " L:%2d R:%2d*T:%2d ", (unsigned int)setLval, (unsigned int)setRval, (unsigned int)setTv ...
+;PCODE: $00000345 VOL: 0
+;PCODE: $00000346 VOL: 0
+;PCODE: $00000347 VOL: 0
+;PCODE: $00000348 VOL: 0
+;PCODE: $00000349 VOL: 0
+;PCODE: $0000034A VOL: 0
+;PCODE: $0000034B VOL: 0
+;PCODE: $0000034C VOL: 0
+;PCODE: $0000034D VOL: 0
+;PCODE: $0000034E VOL: 0
+;PCODE: $0000034F VOL: 0
+;PCODE: $00000350 VOL: 0
+;PCODE: $00000351 VOL: 0
+;PCODE: $00000352 VOL: 0
+;PCODE: $00000353 VOL: 0
+;PCODE: $00000354 VOL: 0
+;PCODE: $00000355 VOL: 0
+;PCODE: $00000356 VOL: 0
+;PCODE: $00000357 VOL: 0
+;PCODE: $00000358 VOL: 0
+;PCODE: $00000359 VOL: 0
+; 0000 01BB             }
+; 0000 01BC          else
+;PCODE: $0000035A VOL: 0
+;PCODE: $0000035B VOL: 0
+; 0000 01BD             {
+; 0000 01BE                 sprintf(disset, " L:%2d R:%2d T:%2d ", (unsigned int)setLval, (unsigned int)setRval, (unsigned int)setTv ...
+;PCODE: $0000035C VOL: 0
+;PCODE: $0000035D VOL: 0
+;PCODE: $0000035E VOL: 0
+;PCODE: $0000035F VOL: 0
+;PCODE: $00000360 VOL: 0
+;PCODE: $00000361 VOL: 0
+;PCODE: $00000362 VOL: 0
+;PCODE: $00000363 VOL: 0
+;PCODE: $00000364 VOL: 0
+;PCODE: $00000365 VOL: 0
+;PCODE: $00000366 VOL: 0
+;PCODE: $00000367 VOL: 0
+;PCODE: $00000368 VOL: 0
+;PCODE: $00000369 VOL: 0
+;PCODE: $0000036A VOL: 0
+;PCODE: $0000036B VOL: 0
+;PCODE: $0000036C VOL: 0
+;PCODE: $0000036D VOL: 0
+;PCODE: $0000036E VOL: 0
+;PCODE: $0000036F VOL: 0
+;PCODE: $00000370 VOL: 0
+; 0000 01BF             }
+;PCODE: $00000371 VOL: 0
+;PCODE: $00000372 VOL: 0
+;PCODE: $00000373 VOL: 0
+; 0000 01C0          if (Lval <= setLval) //光照对比
+;PCODE: $00000374 VOL: 0
+;PCODE: $00000375 VOL: 0
+;PCODE: $00000376 VOL: 0
+;PCODE: $00000377 VOL: 0
+;PCODE: $00000378 VOL: 0
+; 0000 01C1             {
+; 0000 01C2                 LED_WHITE = 0; //打开补光灯
+;PCODE: $00000379 VOL: 0
+;PCODE: $0000037A VOL: 0
+; 0000 01C3             }
+; 0000 01C4             else
+;PCODE: $0000037B VOL: 0
+;PCODE: $0000037C VOL: 0
+; 0000 01C5             {
+; 0000 01C6                 LED_WHITE = 1; //关闭补光灯
+;PCODE: $0000037D VOL: 0
+;PCODE: $0000037E VOL: 0
+; 0000 01C7             }
+;PCODE: $0000037F VOL: 0
+; 0000 01C8 
+; 0000 01C9             if (Rval <= setRval) //土壤对比
+;PCODE: $00000380 VOL: 0
+;PCODE: $00000381 VOL: 0
+;PCODE: $00000382 VOL: 0
+;PCODE: $00000383 VOL: 0
+;PCODE: $00000384 VOL: 0
+; 0000 01CA             {
+; 0000 01CB                 RELAY = 0; //打开水泵继电器
+;PCODE: $00000385 VOL: 0
+;PCODE: $00000386 VOL: 0
+; 0000 01CC             }
+; 0000 01CD             else
+;PCODE: $00000387 VOL: 0
+;PCODE: $00000388 VOL: 0
+; 0000 01CE             {
+; 0000 01CF                 RELAY = 1; //关闭水泵继电器
+;PCODE: $00000389 VOL: 0
+;PCODE: $0000038A VOL: 0
+; 0000 01D0             }
+;PCODE: $0000038B VOL: 0
+; 0000 01D1 
+; 0000 01D2 
+; 0000 01D3             if (dispTemp < setTval) //温度对比
+;PCODE: $0000038C VOL: 0
+;PCODE: $0000038D VOL: 0
+;PCODE: $0000038E VOL: 0
+;PCODE: $0000038F VOL: 0
+;PCODE: $00000390 VOL: 0
+; 0000 01D4             {
+; 0000 01D5                 LED_YELLOW = 0; //打开补温灯
+;PCODE: $00000391 VOL: 0
+;PCODE: $00000392 VOL: 0
+; 0000 01D6                 FAN = 1; //关闭风扇
+;PCODE: $00000393 VOL: 0
+;PCODE: $00000394 VOL: 0
+; 0000 01D7             }
+; 0000 01D8             else if (dispTemp > setTval)
+;PCODE: $00000395 VOL: 0
+;PCODE: $00000396 VOL: 0
+;PCODE: $00000397 VOL: 0
+;PCODE: $00000398 VOL: 0
+;PCODE: $00000399 VOL: 0
+;PCODE: $0000039A VOL: 0
+;PCODE: $0000039B VOL: 0
+; 0000 01D9             {
+; 0000 01DA                 LED_YELLOW = 1; //关闭补温灯
+;PCODE: $0000039C VOL: 0
+;PCODE: $0000039D VOL: 0
+; 0000 01DB                 FAN = 0; //打开风扇
+;PCODE: $0000039E VOL: 0
+;PCODE: $0000039F VOL: 0
+; 0000 01DC             }
+; 0000 01DD             else
+;PCODE: $000003A0 VOL: 0
+;PCODE: $000003A1 VOL: 0
+; 0000 01DE             {
+; 0000 01DF                 LED_YELLOW = 1; //关闭补温灯
+;PCODE: $000003A2 VOL: 0
+;PCODE: $000003A3 VOL: 0
+; 0000 01E0                 FAN = 1; //关闭风扇
+;PCODE: $000003A4 VOL: 0
+;PCODE: $000003A5 VOL: 0
+; 0000 01E1             }
+;PCODE: $000003A6 VOL: 0
+;PCODE: $000003A7 VOL: 0
+; 0000 01E2 
+; 0000 01E3 
+; 0000 01E4          LCD_DisplayString(2, 1, disset);
+;PCODE: $000003A8 VOL: 0
+;PCODE: $000003A9 VOL: 0
+;PCODE: $000003AA VOL: 0
+;PCODE: $000003AB VOL: 0
+;PCODE: $000003AC VOL: 0
+;PCODE: $000003AD VOL: 0
+; 0000 01E5 //         KeyProcess();
+; 0000 01E6       }
+;PCODE: $000003AE VOL: 0
+;PCODE: $000003AF VOL: 0
+; 0000 01E7 }
+;PCODE: $000003B0 VOL: 0
+;PCODE: $000003B1 VOL: 0
+;PCODE: $000003B2 VOL: 0
+;
+;
+;void I2C_SCL_IN(void)
+; 0000 01EB {
+;PCODE: $000003B3 VOL: 0
+;PCODE: $000003B4 VOL: 0
+; 0000 01EC     DDRC.0 = 0;
+;PCODE: $000003B5 VOL: 0
+;PCODE: $000003B6 VOL: 0
+; 0000 01ED     PORTC.0 = 1;
+;PCODE: $000003B7 VOL: 0
+;PCODE: $000003B8 VOL: 0
+; 0000 01EE     delay_us(5);
+;PCODE: $000003B9 VOL: 0
+; 0000 01EF }
+;PCODE: $000003BA VOL: 0
+;PCODE: $000003BB VOL: 0
+;void I2C_SDA_IN(void)
+; 0000 01F1 {
+;PCODE: $000003BC VOL: 0
+;PCODE: $000003BD VOL: 0
+; 0000 01F2     DDRC.1 = 0;
+;PCODE: $000003BE VOL: 0
+;PCODE: $000003BF VOL: 0
+; 0000 01F3     PORTC.1 = 1;
+;PCODE: $000003C0 VOL: 0
+;PCODE: $000003C1 VOL: 0
+; 0000 01F4     delay_ms(5);
+;PCODE: $000003C2 VOL: 0
+;PCODE: $000003C3 VOL: 0
+;PCODE: $000003C4 VOL: 0
+; 0000 01F5 }
+;PCODE: $000003C5 VOL: 0
+;PCODE: $000003C6 VOL: 0
+;void I2C_SDA_OUT(void)
+; 0000 01F7 {
+;PCODE: $000003C7 VOL: 0
+;PCODE: $000003C8 VOL: 0
+; 0000 01F8     DDRC.1 = 1;
+;PCODE: $000003C9 VOL: 0
+;PCODE: $000003CA VOL: 0
+; 0000 01F9     delay_us(5);
+;PCODE: $000003CB VOL: 0
+; 0000 01FA }
+;PCODE: $000003CC VOL: 0
+;PCODE: $000003CD VOL: 0
+;void I2C_SCL_OUT(void)
+; 0000 01FC {
+;PCODE: $000003CE VOL: 0
+;PCODE: $000003CF VOL: 0
+; 0000 01FD     DDRC.0 = 1;
+;PCODE: $000003D0 VOL: 0
+;PCODE: $000003D1 VOL: 0
+; 0000 01FE     delay_us(5);
+;PCODE: $000003D2 VOL: 0
+; 0000 01FF }
+;PCODE: $000003D3 VOL: 0
+;PCODE: $000003D4 VOL: 0
+;
+;void StartI2C()
+; 0000 0202 {
+;PCODE: $000003D5 VOL: 0
+;PCODE: $000003D6 VOL: 0
+; 0000 0203     I2C_SCL_OUT();
+;PCODE: $000003D7 VOL: 0
+; 0000 0204     I2C_SDA_OUT();
+;PCODE: $000003D8 VOL: 0
+; 0000 0205     I2C_SDA_PORT = 1;
+;PCODE: $000003D9 VOL: 0
+;PCODE: $000003DA VOL: 0
+; 0000 0206     I2C_SCL_PORT = 1;
+;PCODE: $000003DB VOL: 0
+;PCODE: $000003DC VOL: 0
+; 0000 0207     delay_us(10);
+;PCODE: $000003DD VOL: 0
+; 0000 0208     I2C_SDA_PORT = 0;
+;PCODE: $000003DE VOL: 0
+;PCODE: $000003DF VOL: 0
+; 0000 0209     delay_us(10);
+;PCODE: $000003E0 VOL: 0
+; 0000 020A     I2C_SCL_PORT = 0;
+;PCODE: $000003E1 VOL: 0
+;PCODE: $000003E2 VOL: 0
+; 0000 020B }
+;PCODE: $000003E3 VOL: 0
+;PCODE: $000003E4 VOL: 0
+;
+;void StopI2C()
+; 0000 020E {
+;PCODE: $000003E5 VOL: 0
+;PCODE: $000003E6 VOL: 0
+; 0000 020F     I2C_SCL_OUT();
+;PCODE: $000003E7 VOL: 0
+; 0000 0210     I2C_SDA_OUT();
+;PCODE: $000003E8 VOL: 0
+; 0000 0211     I2C_SDA_PORT = 0;
+;PCODE: $000003E9 VOL: 0
+;PCODE: $000003EA VOL: 0
+; 0000 0212     I2C_SCL_PORT = 0;
+;PCODE: $000003EB VOL: 0
+;PCODE: $000003EC VOL: 0
+; 0000 0213     delay_us(10);
+;PCODE: $000003ED VOL: 0
+; 0000 0214     I2C_SCL_PORT = 1;
+;PCODE: $000003EE VOL: 0
+;PCODE: $000003EF VOL: 0
+; 0000 0215     delay_us(10);
+;PCODE: $000003F0 VOL: 0
+; 0000 0216     I2C_SDA_PORT = 1;
+;PCODE: $000003F1 VOL: 0
+;PCODE: $000003F2 VOL: 0
+; 0000 0217 }
+;PCODE: $000003F3 VOL: 0
+;PCODE: $000003F4 VOL: 0
+;
+;bit WriteI2C(unsigned char dat)
+; 0000 021A {
+;PCODE: $000003F5 VOL: 0
+;PCODE: $000003F6 VOL: 0
+; 0000 021B     bit ack;
+; 0000 021C     unsigned char mask;
+; 0000 021D     I2C_SCL_OUT();
+;PCODE: $000003F7 VOL: 0
+;PCODE: $000003F8 VOL: 0
+;PCODE: $000003F9 VOL: 0
+;	dat -> Y+2
+;	ack -> R17
+;	mask -> R16
+;PCODE: $000003FA VOL: 0
+; 0000 021E     I2C_SDA_OUT();
+;PCODE: $000003FB VOL: 0
+; 0000 021F     for (mask=0x80; mask!=0; mask>>=1)
+;PCODE: $000003FC VOL: 0
+;PCODE: $000003FD VOL: 0
+;PCODE: $000003FE VOL: 0
+;PCODE: $000003FF VOL: 0
+;PCODE: $00000400 VOL: 0
+;PCODE: $00000401 VOL: 0
+;PCODE: $00000402 VOL: 0
+; 0000 0220     {
+; 0000 0221         if ((mask&dat) == 0)
+;PCODE: $00000403 VOL: 0
+;PCODE: $00000404 VOL: 0
+;PCODE: $00000405 VOL: 0
+; 0000 0222             I2C_SDA_PORT = 0;
+;PCODE: $00000406 VOL: 0
+;PCODE: $00000407 VOL: 0
+; 0000 0223         else
+;PCODE: $00000408 VOL: 0
+;PCODE: $00000409 VOL: 0
+; 0000 0224             I2C_SDA_PORT = 1;
+;PCODE: $0000040A VOL: 0
+;PCODE: $0000040B VOL: 0
+; 0000 0225         delay_us(10);
+;PCODE: $0000040C VOL: 0
+;PCODE: $0000040D VOL: 0
+; 0000 0226         I2C_SCL_PORT = 1;
+;PCODE: $0000040E VOL: 0
+;PCODE: $0000040F VOL: 0
+; 0000 0227         delay_us(10);
+;PCODE: $00000410 VOL: 0
+; 0000 0228         I2C_SCL_PORT = 0;
+;PCODE: $00000411 VOL: 0
+;PCODE: $00000412 VOL: 0
+; 0000 0229     }
+;PCODE: $00000413 VOL: 0
+;PCODE: $00000414 VOL: 0
+;PCODE: $00000415 VOL: 0
+;PCODE: $00000416 VOL: 0
+; 0000 022A     I2C_SDA_PORT = 1;    //8位数据发送完毕之后，主动释放SDA，以检测从机应答
+;PCODE: $00000417 VOL: 0
+;PCODE: $00000418 VOL: 0
+; 0000 022B     delay_us(10);
+;PCODE: $00000419 VOL: 0
+; 0000 022C     I2C_SDA_IN();
+;PCODE: $0000041A VOL: 0
+; 0000 022D     I2C_SCL_PORT = 1;
+;PCODE: $0000041B VOL: 0
+;PCODE: $0000041C VOL: 0
+; 0000 022E     delay_us(10);
+;PCODE: $0000041D VOL: 0
+; 0000 022F     ack = I2C_SDA_PIN;  //读取此时的SDA 值，即为从机的应答值
+;PCODE: $0000041E VOL: 0
+;PCODE: $0000041F VOL: 0
+;PCODE: $00000420 VOL: 0
+; 0000 0230     delay_us(10);
+;PCODE: $00000421 VOL: 0
+; 0000 0231     I2C_SCL_PORT = 0;    //再拉低SCL 完成应答位，并保持住总线
+;PCODE: $00000422 VOL: 0
+;PCODE: $00000423 VOL: 0
+; 0000 0232     return (~ack);  //应答值取反以符合通常的逻辑：0=不存在或忙或写入失败，1=存在且空闲或写入成功
+;PCODE: $00000424 VOL: 0
+;PCODE: $00000425 VOL: 0
+;PCODE: $00000426 VOL: 0
+;PCODE: $00000427 VOL: 0
+;PCODE: $00000428 VOL: 0
+;PCODE: $00000429 VOL: 0
+;PCODE: $0000042A VOL: 0
+;PCODE: $0000042B VOL: 0
+; 0000 0233 }
+;PCODE: $0000042C VOL: 0
+;
+;//读I2C，并应答
+;unsigned char ReadI2CAck()
+; 0000 0237 {
+;PCODE: $0000042D VOL: 0
+;PCODE: $0000042E VOL: 0
+; 0000 0238     unsigned char mask;
+; 0000 0239     unsigned char dat;
+; 0000 023A     I2C_SCL_OUT();
+;PCODE: $0000042F VOL: 0
+;PCODE: $00000430 VOL: 0
+;	mask -> R17
+;	dat -> R16
+;PCODE: $00000431 VOL: 0
+; 0000 023B     I2C_SDA_OUT();
+;PCODE: $00000432 VOL: 0
+; 0000 023C     I2C_SDA_PORT = 1;
+;PCODE: $00000433 VOL: 0
+;PCODE: $00000434 VOL: 0
+; 0000 023D     I2C_SDA_IN();
+;PCODE: $00000435 VOL: 0
+; 0000 023E     for (mask=0x80; mask!=0; mask>>=1)
+;PCODE: $00000436 VOL: 0
+;PCODE: $00000437 VOL: 0
+;PCODE: $00000438 VOL: 0
+;PCODE: $00000439 VOL: 0
+;PCODE: $0000043A VOL: 0
+;PCODE: $0000043B VOL: 0
+;PCODE: $0000043C VOL: 0
+; 0000 023F     {
+; 0000 0240         delay_us(10);
+;PCODE: $0000043D VOL: 0
+; 0000 0241         I2C_SCL_PORT = 1;        //拉高SCL
+;PCODE: $0000043E VOL: 0
+;PCODE: $0000043F VOL: 0
+; 0000 0242         delay_us(10);
+;PCODE: $00000440 VOL: 0
+; 0000 0243         if (I2C_SDA_PIN == 0)   //读取SDA 的值
+;PCODE: $00000441 VOL: 0
+;PCODE: $00000442 VOL: 0
+;PCODE: $00000443 VOL: 0
+; 0000 0244             dat &= ~mask;   //为0 时，dat 中对应位清零
+;PCODE: $00000444 VOL: 0
+;PCODE: $00000445 VOL: 0
+;PCODE: $00000446 VOL: 0
+;PCODE: $00000447 VOL: 0
+; 0000 0245         else
+;PCODE: $00000448 VOL: 0
+;PCODE: $00000449 VOL: 0
+; 0000 0246             dat |= mask;    //为1 时，dat 中对应位置1
+;PCODE: $0000044A VOL: 0
+;PCODE: $0000044B VOL: 0
+; 0000 0247         delay_us(10);
+;PCODE: $0000044C VOL: 0
+;PCODE: $0000044D VOL: 0
+; 0000 0248         I2C_SCL_PORT = 0;        //再拉低SCL，以使从机发送出下一位
+;PCODE: $0000044E VOL: 0
+;PCODE: $0000044F VOL: 0
+; 0000 0249         I2C_SDA_OUT();
+;PCODE: $00000450 VOL: 0
+; 0000 024A         delay_us(10);
+;PCODE: $00000451 VOL: 0
+; 0000 024B     }
+;PCODE: $00000452 VOL: 0
+;PCODE: $00000453 VOL: 0
+;PCODE: $00000454 VOL: 0
+;PCODE: $00000455 VOL: 0
+; 0000 024C     I2C_SDA_PORT = 0;    //8 位数据发送完后，拉低SDA，发送应答信号
+;PCODE: $00000456 VOL: 0
+;PCODE: $00000457 VOL: 0
+; 0000 024D     delay_us(10);
+;PCODE: $00000458 VOL: 0
+; 0000 024E     I2C_SCL_PORT = 1;    //拉高SCL
+;PCODE: $00000459 VOL: 0
+;PCODE: $0000045A VOL: 0
+; 0000 024F     delay_us(10);
+;PCODE: $0000045B VOL: 0
+; 0000 0250     I2C_SCL_PORT = 0;    //再拉低SCL 完成应答位，并保持住总线
+;PCODE: $0000045C VOL: 0
+;PCODE: $0000045D VOL: 0
+; 0000 0251     return dat;
+;PCODE: $0000045E VOL: 0
+;PCODE: $0000045F VOL: 0
+;PCODE: $00000460 VOL: 0
+; 0000 0252 }
+;PCODE: $00000461 VOL: 0
+;
+;//读I2C，但不应答
+;unsigned char ReadI2CNoAck()
+; 0000 0256 {
+;PCODE: $00000462 VOL: 0
+;PCODE: $00000463 VOL: 0
+; 0000 0257     unsigned char mask;
+; 0000 0258     unsigned char dat;
+; 0000 0259     I2C_SDA_OUT();
+;PCODE: $00000464 VOL: 0
+;PCODE: $00000465 VOL: 0
+;	mask -> R17
+;	dat -> R16
+;PCODE: $00000466 VOL: 0
+; 0000 025A     I2C_SCL_OUT();
+;PCODE: $00000467 VOL: 0
+; 0000 025B     I2C_SDA_PORT = 1;
+;PCODE: $00000468 VOL: 0
+;PCODE: $00000469 VOL: 0
+; 0000 025C     for (mask=0x80; mask!=0; mask>>=1)
+;PCODE: $0000046A VOL: 0
+;PCODE: $0000046B VOL: 0
+;PCODE: $0000046C VOL: 0
+;PCODE: $0000046D VOL: 0
+;PCODE: $0000046E VOL: 0
+;PCODE: $0000046F VOL: 0
+;PCODE: $00000470 VOL: 0
+; 0000 025D     {
+; 0000 025E         delay_us(10);
+;PCODE: $00000471 VOL: 0
+; 0000 025F         I2C_SDA_IN();
+;PCODE: $00000472 VOL: 0
+; 0000 0260         delay_us(10);
+;PCODE: $00000473 VOL: 0
+; 0000 0261         I2C_SCL_PORT = 1;        //拉高SCL
+;PCODE: $00000474 VOL: 0
+;PCODE: $00000475 VOL: 0
+; 0000 0262         delay_us(10);
+;PCODE: $00000476 VOL: 0
+; 0000 0263         if (I2C_SDA_PIN == 0)   //读取SDA 的值
+;PCODE: $00000477 VOL: 0
+;PCODE: $00000478 VOL: 0
+;PCODE: $00000479 VOL: 0
+; 0000 0264             dat &= ~mask;   //为0 时，dat 中对应位清零
+;PCODE: $0000047A VOL: 0
+;PCODE: $0000047B VOL: 0
+;PCODE: $0000047C VOL: 0
+;PCODE: $0000047D VOL: 0
+; 0000 0265         else
+;PCODE: $0000047E VOL: 0
+;PCODE: $0000047F VOL: 0
+; 0000 0266             dat |= mask;    //为1 时，dat 中对应位置1
+;PCODE: $00000480 VOL: 0
+;PCODE: $00000481 VOL: 0
+; 0000 0267         delay_us(10);
+;PCODE: $00000482 VOL: 0
+;PCODE: $00000483 VOL: 0
+; 0000 0268         I2C_SCL_PORT = 0;        //再拉低SCL，以使从机发送出下一位
+;PCODE: $00000484 VOL: 0
+;PCODE: $00000485 VOL: 0
+; 0000 0269     }
+;PCODE: $00000486 VOL: 0
+;PCODE: $00000487 VOL: 0
+;PCODE: $00000488 VOL: 0
+;PCODE: $00000489 VOL: 0
+; 0000 026A     I2C_SDA_OUT();
+;PCODE: $0000048A VOL: 0
+; 0000 026B     delay_us(10);
+;PCODE: $0000048B VOL: 0
+; 0000 026C     I2C_SDA_PORT = 1;    //8 位数据发送完后，拉高SDA，发送非应答信号
+;PCODE: $0000048C VOL: 0
+;PCODE: $0000048D VOL: 0
+; 0000 026D     delay_us(10);
+;PCODE: $0000048E VOL: 0
+; 0000 026E     I2C_SCL_PORT = 1;    //拉高SCL
+;PCODE: $0000048F VOL: 0
+;PCODE: $00000490 VOL: 0
+; 0000 026F     delay_us(10);
+;PCODE: $00000491 VOL: 0
+; 0000 0270     I2C_SCL_PORT = 0;    //再拉低SCL 完成应答位，并保持住总线
+;PCODE: $00000492 VOL: 0
+;PCODE: $00000493 VOL: 0
+; 0000 0271     return dat;
+;PCODE: $00000494 VOL: 0
+;PCODE: $00000495 VOL: 0
+;PCODE: $00000496 VOL: 0
+; 0000 0272 }
+;PCODE: $00000497 VOL: 0
+;
+;unsigned char ReadADC(unsigned char channel)
+; 0000 0275 {
+;PCODE: $00000498 VOL: 0
+;PCODE: $00000499 VOL: 0
+; 0000 0276     bit ack = 0;
+; 0000 0277     unsigned char dat = 0;
+; 0000 0278     StartI2C();
+;PCODE: $0000049A VOL: 0
+;PCODE: $0000049B VOL: 0
+;PCODE: $0000049C VOL: 0
+;	channel -> Y+2
+;	ack -> R17
+;	dat -> R16
+;PCODE: $0000049D VOL: 0
+;PCODE: $0000049E VOL: 0
+;PCODE: $0000049F VOL: 0
+;PCODE: $000004A0 VOL: 0
+;PCODE: $000004A1 VOL: 0
+; 0000 0279     do
+;PCODE: $000004A2 VOL: 0
+; 0000 027A     {
+; 0000 027B         ack = WriteI2C(ADDR_WR);
+;PCODE: $000004A3 VOL: 0
+;PCODE: $000004A4 VOL: 0
+;PCODE: $000004A5 VOL: 0
+; 0000 027C     }while (!ack);
+;PCODE: $000004A6 VOL: 0
+;PCODE: $000004A7 VOL: 0
+;PCODE: $000004A8 VOL: 0
+;PCODE: $000004A9 VOL: 0
+;PCODE: $000004AA VOL: 0
+; 0000 027D     WriteI2C(0x00 | channel);
+;PCODE: $000004AB VOL: 0
+;PCODE: $000004AC VOL: 0
+;PCODE: $000004AD VOL: 0
+;PCODE: $000004AE VOL: 0
+; 0000 027E     StopI2C();
+;PCODE: $000004AF VOL: 0
+; 0000 027F     StartI2C();
+;PCODE: $000004B0 VOL: 0
+; 0000 0280     do
+;PCODE: $000004B1 VOL: 0
+; 0000 0281     {
+; 0000 0282         ack = WriteI2C(ADDR_RD);
+;PCODE: $000004B2 VOL: 0
+;PCODE: $000004B3 VOL: 0
+;PCODE: $000004B4 VOL: 0
+; 0000 0283     }while (!ack);
+;PCODE: $000004B5 VOL: 0
+;PCODE: $000004B6 VOL: 0
+;PCODE: $000004B7 VOL: 0
+;PCODE: $000004B8 VOL: 0
+;PCODE: $000004B9 VOL: 0
+; 0000 0284     ReadI2CAck(); //丢弃上一次的转换值
+;PCODE: $000004BA VOL: 0
+; 0000 0285     dat = ReadI2CNoAck();  //获取最新的转换值
+;PCODE: $000004BB VOL: 0
+;PCODE: $000004BC VOL: 0
+; 0000 0286     StopI2C();
+;PCODE: $000004BD VOL: 0
+; 0000 0287     return dat;
+;PCODE: $000004BE VOL: 0
+;PCODE: $000004BF VOL: 0
+;PCODE: $000004C0 VOL: 0
+;PCODE: $000004C1 VOL: 0
+;PCODE: $000004C2 VOL: 0
+;PCODE: $000004C3 VOL: 0
+;PCODE: $000004C4 VOL: 0
+; 0000 0288 }
+;PCODE: $000004C5 VOL: 0
