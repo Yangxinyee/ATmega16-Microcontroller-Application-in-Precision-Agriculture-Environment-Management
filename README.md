@@ -1,2 +1,0 @@
-# IntelligentPlantingManagementAndMonitoringSystembasedonATmega16
-Intelligent Planting Management and Monitoring System based on ATmega16
