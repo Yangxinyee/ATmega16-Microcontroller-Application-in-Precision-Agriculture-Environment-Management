@@ -8,7 +8,7 @@ This system is composed of AT mega16 MCU circuit +LCD1602 LCD circuit + light de
 2. DS18B20 detects the temperature value, and displays it on the LCD screen in real time, and can set the temperature value by pressing the button, when the temperature is lower than the set value, through a yellow high-lighted LED light to simulate heating. When the temperature exceeds the set value, the fan rotates to dissipate heat.
 3. The soil moisture sensor detects the soil moisture, and the humidity value is displayed on the LCD screen in real time, and the soil moisture value can be set, when the soil moisture is less than the set threshold, the pump adds water. When the value is greater than the threshold, no action is taken.
 
-<img src="https://i.imgur.com/cH7ZOst.png" width="60%">
+<div align=center><img src="https://i.imgur.com/cH7ZOst.png" width="60%"></div>
 
 The intelligent planting management system is characterized by energy saving, emission reduction and intelligence. Overall function: display the above set threshold; Button switch Settings, adjust the setting threshold; If the light is not enough, automatically fill the light; If the temperature is too high, it will cool down, and if the temperature is too low, it will warm up. If the humidity is too high, the humidity will decrease, and if the humidity is too low, the humidity will increase. Simple line, fast operation.
 
@@ -138,31 +138,31 @@ This module is mainly composed of voltmeter and resistor, and the corresponding 
 
 When the ambient temperature is above the threshold, the fan module starts working, the LIGHT8 lights up, and the motor starts running:
 
-<img src="https://i.imgur.com/BK7SlmE.png" width="70%">
+<img src="https://i.imgur.com/BK7SlmE.png" width="100%">
 
 When the ambient temperature is lower than the threshold, the supplementary temperature light will turn on:
 
-<img src="https://i.imgur.com/beb8nag.png" width="70%">
+<img src="https://i.imgur.com/beb8nag.png" width="100%">
 
 ### Light Intensity
 
 When the ambient light intensity is higher than the threshold, no action is taken:
 
-<img src="https://i.imgur.com/tpCF9sm.png" width="70%">
+<img src="https://i.imgur.com/tpCF9sm.png" width="100%">
 
 When the ambient light intensity is below the threshold, the light will turn on:
 
-<img src="https://i.imgur.com/6Jzq0EX.png" width="70%">
+<img src="https://i.imgur.com/6Jzq0EX.png" width="100%">
 
 ### Humidity
 
 When the soil moisture is higher than the threshold, nothing is done, the pump does not operate, and the LIGHT1 is not bright:
 
-<img src="https://i.imgur.com/owNCE57.jpg" width="70%">
+<img src="https://i.imgur.com/owNCE57.jpg" width="100%">
 
 When the soil moisture falls below the threshold, the pump starts running and LIGHT1 lights up:
 
-<img src="https://i.imgur.com/VGQy5YC.png" width="70%">
+<img src="https://i.imgur.com/VGQy5YC.png" width="100%">
 
 ## Video Demo (CN Version)
 
@@ -170,4 +170,4 @@ When the soil moisture falls below the threshold, the pump starts running and LI
 
 ## Chinese Software Copyright Certificate
 
-<img src="https://i.imgur.com/8nzwq9f.jpg" width="50%">
+<div align=center><img src="https://i.imgur.com/8nzwq9f.jpg" width="60%"></div>
