@@ -174,13 +174,13 @@ https://youtu.be/R3Pz3viNpK0?si=PWJ924dyEFUJzJPV
 
 1. Generate the target binary in the CodeVision AVR compiler.
 
-<img src="https://i.imgur.com/EUFM7zw.png" width="50%">
+<img src="https://i.imgur.com/EUFM7zw.png" width="70%">
 
 2. Import binary files into Proteus microcontroller simulation system.
 
-<img src="https://i.imgur.com/RtV8j4a.png" width="50%">
+<img src="https://i.imgur.com/RtV8j4a.png" width="70%">
 
-<img src="https://i.imgur.com/H4PIsp6.png" width="50%">
+<img src="https://i.imgur.com/H4PIsp6.png" width="70%">
 
 3. Start-up simulation.
 
