@@ -1,5 +1,4 @@
-# Intelligent Planting Management and Monitoring System based on ATmega16
-
+# ATmega16 Microcontroller Application in Precision Agriculture Environment Management
 ## Content
 
 This system is composed of AT mega16 MCU circuit +LCD1602 LCD circuit + light detection circuit + soil moisture sensor circuit +A/D sampling PCF8591 circuit + fan control circuit + relay control circuit + bright LED light filling circuit + bright LED light heating circuit + key control circuit + power circuit.
